@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cd "$(dirname "$0")" || exit
+
+[ -d 'node_modules' ] || npm install
+
+T='@skryabin_com_resp and @medium_size'
+
+O="cucumber.filter.tags=$T"
+
+#export DISPLAY=:0
+
+mvn test "-D$O" -Dtest.force_webdriver=true -Dtest.browser=chrome
+
+nodejs toHTML.js
