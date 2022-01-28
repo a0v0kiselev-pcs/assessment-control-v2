@@ -27,10 +27,59 @@ import java.util.Map;
 
 public final class TestContext {
 
-    private static WebDriver driver;
+    private static WebDriver driver = null;
+    private static Runnable driverCreation = null;
+    private static Runnable driverOnScenarioStart = null;
+    private static Object driverOptions = null;
+
+    private static void cleanup() {
+        driver = null;
+        driverCreation = null;
+        driverOnScenarioStart = null;
+        driverOptions = null;
+    }
 
     public static WebDriver getDriver() {
+        if (driver == null) {
+            driverCreation.run();
+            if (driverOnScenarioStart != null) {
+                driverOnScenarioStart.run();
+                driverOnScenarioStart = null;
+            }
+        }
         return driver;
+    }
+
+    /**
+     * A way to modify web driver options in step definitions.
+     * <p>
+     * Call {@link #reapplyDriverOptions()} to reapply.
+     *
+     * @return current web driver options
+     */
+    public static Object getDriverOptions() {
+        return driverOptions;
+    }
+
+    /**
+     * To be called on scenario start.
+     *
+     * @param v Code to be executed on first browser start during scenario execution.
+     */
+    public static void setDriverOnScenarioStart(final Runnable v) {
+        driverOnScenarioStart = v;
+    }
+
+    /**
+     * Reapplies the web driver options. The browser will exit and start on the next {@link #getDriver()}.
+     */
+    public static void reapplyDriverOptions() {
+        if (driverCreation != null) {
+            if (driver != null) {
+                driver.quit();
+                driver = null;
+            }
+        }
     }
 
     public static void initialize() {
@@ -43,7 +92,9 @@ public final class TestContext {
     }
 
     public static void teardown() {
-        driver.quit();
+        if (driver != null)
+            driver.quit();
+        cleanup();
     }
 
     /**
@@ -87,7 +138,8 @@ public final class TestContext {
                         chromeOptions.addArguments("--window-size=" + size.getWidth() + "," + size.getHeight());
                         chromeOptions.addArguments("--disable-gpu");
                     }
-                    driver = new ChromeDriver(chromeOptions);
+                    driverOptions = chromeOptions;
+                    driverCreation = () -> driver = new ChromeDriver(chromeOptions);
                     break;
                 case "firefox":
                     if (forceWebdriver)

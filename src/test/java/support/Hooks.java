@@ -7,13 +7,14 @@ import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 
 import static support.TestContext.getDriver;
+import static support.TestContext.setDriverOnScenarioStart;
 
 public final class Hooks {
 
     @Before(order = 0)
     public void scenarioStart() {
         TestContext.initialize();
-        getDriver().manage().deleteAllCookies();
+        setDriverOnScenarioStart(() -> getDriver().manage().deleteAllCookies());
     }
 
     @After(order = 0)
