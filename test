@@ -1,15 +1,22 @@
 #!/bin/bash
 
+if [ "$1" = '--help' ]; then
+  echo -e "\e[1mUsage:\e[0m\n\t\e[1m$0\e[0m [\e[3moptions\e[0m]\n\n\t\e[3moptions\e[0m - Java properties without -D prefix\n"
+  echo -e "\e[1mExample:\e[0m\n\t\e[1m$0\e[0m test.headless=true test.browser=chrome 'cucumber.filter.tags=@blah1 and @blah2'\n"
+  exit
+fi
+
 cd "$(dirname "$0")" || exit
 
 [ -d 'node_modules' ] || npm install
 
-T='@skryabin_com_resp and @medium_size'
-
-O="cucumber.filter.tags=$T"
-
-#export DISPLAY=:0
-
-mvn test "-D$O" -Dtest.force_webdriver=true -Dtest.browser=chrome
+if [ "$#" -eq 0 ]; then
+  #export DISPLAY=:0
+  T='@skryabin_com_resp and @medium_size'
+  O="cucumber.filter.tags=$T"
+  mvn test "-D$O" -Dtest.force_webdriver=true -Dtest.browser=chrome
+else
+  mvn test "${@/#/-D}"
+fi
 
 nodejs toHTML.js
